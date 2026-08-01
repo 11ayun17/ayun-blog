@@ -1,3 +1,6 @@
+
+本人是一名普通的大学僧，这次的开源项目是b站上找的，所以readme我就不改了，就按照他写的吧
+
 # 2025 Blog
 
 > 最新引导说明：https://www.yysuni.com/blog/readme
