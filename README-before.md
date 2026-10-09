@@ -165,3 +165,6 @@ tg 群：1月1号，才创建的 tg 群 https://t.me/public_blog_2025
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=YYsuni/2025-blog-public&type=date&legend=top-left" />
  </picture>
 </a>
+
+
+> 哇塞，你这么有耐心吗居然都看完了[点此回退到原来的链接](./README.md)
