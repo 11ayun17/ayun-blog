@@ -1,167 +1,444 @@
+# 2025 Blog 项目结构说明
 
-本人是一名普通的大学僧，这次的开源项目是b站上找的，所以readme我就不改了，就按照他写的吧
+> 这是一份面向初学者的项目结构文档，帮助你理解每个文件和目录的作用。
+> 本项目是一个基于 **Next.js 16** 的静态博客，特殊之处在于它**没有传统后端**，所有内容（文章、图片、配置）都存储在 GitHub 仓库中，通过 GitHub API 实现在线编辑和发布。
 
-# 2025 Blog
+---
 
-> 最新引导说明：https://www.yysuni.com/blog/readme
+## 一、技术栈概览
 
-该项目使用 Github App 管理项目内容，请保管好后续创建的 **Private key**，不要上传到公开网上。
+| 技术 | 用途 |
+|------|------|
+| **Next.js 16** | 前端框架（React 的全栈框架） |
+| **React 19** | UI 组件库 |
+| **TypeScript** | 类型安全的 JavaScript |
+| **Tailwind CSS 4** | CSS 样式框架 |
+| **Zustand** | 轻量级状态管理 |
+| **SWR** | 数据请求和缓存 |
+| **Cloudflare / Vercel** | 部署平台 |
+| **GitHub API** | 充当"数据库"，读写文章和图片 |
 
-## 1. 安装
+---
 
-使用该项目可以先不做本地开发，直接部署然后配置环境变量。具体变量名请看下列大写变量
+## 二、根目录文件
 
-```ts
-export const GITHUB_CONFIG = {
-	OWNER: process.env.NEXT_PUBLIC_GITHUB_OWNER || '11ayun17',
-	REPO: process.env.NEXT_PUBLIC_GITHUB_REPO || 'ayun-blog',
-	BRANCH: process.env.NEXT_PUBLIC_GITHUB_BRANCH || 'main',
-	APP_ID: process.env.NEXT_PUBLIC_GITHUB_APP_ID || '-'
-} as const
+### `package.json`
+项目的"身份证"——记录项目名称、版本、依赖包和脚本命令。`npm install` 就是根据这个文件安装依赖的。
+
+常用命令：
+- `pnpm dev` — 启动本地开发服务器（端口 2025）
+- `pnpm build` — 构建生产版本
+- `pnpm deploy` — 部署到 Cloudflare
+
+### `tsconfig.json`
+TypeScript 配置文件，告诉 TypeScript 编译器如何检查代码。`"@/*": ["./src/*"]` 这行定义了 `@` 符号代表 `src` 目录（比如 `@/components/card` 就等于 `src/components/card`）。
+
+### `next.config.ts`
+Next.js 的配置文件，包括：
+- 开启 React Compiler（自动优化性能）
+- 配置 `.svg`文件的导入方式
+- 设置页面重定向（`/zh` 和 `/en` 自动跳转到首页）
+
+### `wrangler.toml`
+Cloudflare 部署配置文件。如果部署到 Vercel 则不需要这个文件。
+
+### `open-next.config.ts`
+Cloudflare 适配器的配置文件，一行代码即可让 Next.js 运行在 Cloudflare 上。
+
+### `pnpm-lock.yaml` / `pnpm-workspace.yaml`
+包管理器的锁定文件和 workspace 配置，确保团队成员安装的依赖版本一致。**你不需要手动修改。**
+
+### `postcss.config.mjs`
+PostCSS 配置文件，用于 Tailwind CSS 编译。**不需要手动修改。**
+
+### `.gitignore`
+告诉 Git 忽略哪些文件（如 `node_modules`、`.next` 等），不要提交到仓库。
+
+### `.npmrc`
+npm/pnpm 配置，这里设置了 `shamefully-hoist=true`（依赖提升策略）。
+
+### `.prettierrc` / `.prettierignore`
+代码格式化工具 Prettier 的配置。保持代码风格统一。
+
+### `global.d.ts`
+全局 TypeScript 类型声明文件。
+
+### `LICENSE`
+开源许可证文件。
+
+---
+
+## 三、目录结构
+
+### `public/` — 静态资源目录
+
+这个目录下的文件会被直接托管，可以通过 URL 直接访问。
+
+```
+public/
+├── avatar.png                    # 网站头像/Logo
+├── favicon.png                   # 浏览器标签页图标
+├── manifest.json                 # PWA 配置（网站可以安装到手机桌面）
+├── images/                       # 所有图片资源
+│   ├── art/                      # 首页展示的艺术插图
+│   ├── blogger/                  # "优秀博客"页面的博主头像
+│   ├── christmas/                # 圣诞节雪花特效图片
+│   ├── hats/                     # 首页帽子装饰图片
+│   ├── misc/                     # 杂项图片
+│   ├── pictures/                 # "照片墙"页面的照片
+│   ├── project/                  # "我的项目"页面的项目截图
+│   ├── share/                    # "推荐分享"页面的图标/截图
+│   ├── blockies.svg              # 默认头像占位图
+│   ├── cursor.svg                # 自定义鼠标光标样式
+│   └── vue-kit.webp              # Vue 工具图标
+└── blogs/
+    ├── index.json                # ⭐ 博客文章索引文件（列出所有文章的信息）
+    └── categories.json           # ⭐ 博客分类列表
 ```
 
-也可以自己手动先调整安装，可自行 `pnpm i`
+### `scripts/` — 脚本目录
 
-## 2. 部署
-
-我这里熟悉 Vercel 部署，就以 Vercel 部署为例子。创建 Project => Import 这个项目
-
-![](https://www.yysuni.com/blogs/readme/730266f17fab9717.png)
-
-无需配置，直接点部署
-
-![](https://www.yysuni.com/blogs/readme/95dee9a69154d0d0.png)
-
-大约 60 秒会部署完成，有一个直接 vercel 域名，如：https://2025-blog-public.vercel.app/
-
-到这里部署网站已经完成了，下一步创建 Github App
-
-## 3. 创建 Github App 链接仓库
-
-在 github 个人设置里面，找到最下面的 Developer Settings ，点击进入
-
-![](https://www.yysuni.com/blogs/readme/0abb3b592cbedad6.png)
-
-进入开发者页面，点击 **New Github App**
-
-*GitHub App name* 和 *Homepage URL* , 输入什么都不影响。Webhook 也关闭，不需要。
-
-![](https://www.yysuni.com/blogs/readme/71dcd9cf8ec967c0.png)
-
-只需要注意设置一个仓库 write 权限，其它不用。
-
-![](https://www.yysuni.com/blogs/readme/2be290016e56cd34.png)
-
-点击创建，谁能安装这个仓库这个选择无所谓。直接创建。
-
-![](https://www.yysuni.com/blogs/readme/aa002e6805ab2d65.png)
-
-
-### 创建密钥
-
-创建好 Github App 后会提示必须创建一个 **Private Key**，直接创建，会自动下载（不见了也不要紧，后面自己再创建再下载就行）。页面上有个 **App ID** 需要复制一下
-
-再切换到安装页面
-
-![](https://www.yysuni.com/blogs/readme/c122b1585bb7a46a.png)
-
-这里一定要只**授权当前项目**。
-
-![](https://www.yysuni.com/blogs/readme/2cf1cee3b04326f1.png)
-
-点击安装，就完成了 Github App 管理该仓库的权限设置了。下一步就是让前端知道推送那个项目，就是最开始提到的环境变量。（如果你不会设置环境变量，直接改仓库文件 `src/consts.ts` 也行。因为是公开的，所以环境变量意义也不大）
-
-直接输入这几个环境变量值就行，一般只用设置 OWNER 和 APP_ID。其它配置不用管，直接输入创建就行。
-
-![](https://www.yysuni.com/blogs/readme/c5a049d737848abf.png)
-
-设置完成后，需要手动再部署一次，让环境变量生效。
-* 可以直接 push 一次仓库代码会触发部署
-* 也可以手动选择创建一次部署
-![](https://www.yysuni.com/blogs/readme/59a802ed8d1c3a13.png)
-
-## 4. 完成
-
-现在，部署的这个网站就可以开始使用前端改内容了。比如更改一个分享内容。
-
-**提示**，网站前端页面删改完提示成功之后，你需要等待后台的部署完成，再刷新页面才能完成服务器内容的更新哦。
-
-## 5. 删除
-
-使用这个项目应该第一件事需要删除我的 blog，单独删除，批量删除已完成。
-
-## 6. 配置
-
-大部分页面右上角都会有一个编辑按钮，意味着你可以使用 **private key** 进行配置部署。
-
-### 6.1 网站配置
-
-首页有一个不显眼的配置按钮，点击就能看到现在可以配置的内容。
-
-![](https://www.yysuni.com/blogs/readme/cddb4710e08a5069.png)
-
-## 7. 写 blog
-
-写 blog 的图片管理，可能会有疑惑。图片管理推荐逻辑是先点击 **+ 号** 添加图片，（推荐先压缩好，尺寸推荐宽度不超过 1200）。然后将上传好的图片直接拖入文案编辑区，这就已经添加好了，点击右上角预览就可以看到效果。
-
-## 8. 写给非前端
-
-非前端配置内容，还是需要一个文件指引。下面写一些更细致的代码配置。
-
-### 8.1 移除 Liquid Grass
-
-进入 `src/layout/index.tsx` 文件，删除两行代码，然后提交代码到你的 github
-```tsx
-const LiquidGrass = dynamic(() => import('@/components/liquid-grass'), { ssr: false })
-// 中间省略...
-<LiquidGrass /> // 第 53 行
+```
+scripts/
+└── gen-svgs-index.js             # 自动扫描 SVG 文件并生成导入索引
 ```
 
-![](https://www.yysuni.com/blogs/readme/f70ff3fe3a77f193.png)
+运行 `pnpm svg` 会自动扫描 `src/svgs/` 下所有 `.svg` 文件，并生成一个统一的 `index.ts` 导出文件。当你添加新的 SVG 图标时，运行这个命令即可自动更新。
 
-### 8.2 配置首页内容
+### `src/` — 源代码主目录（核心！）
 
-首页的内容现在只能前端配置一部分，所以代码更改在 `src/app/(home)` 目录，这个目录代表首页所有文件。首页的具体文件为  `src/app/(home)/page.tsx`
+```
+src/
+├── app/                          # 📄 页面路由（Next.js App Router）
+├── components/                   # 🧩 全局通用组件
+├── config/                       # ⚙️ 配置文件
+├── hooks/                        # 🪝 自定义 Hook（状态管理、数据获取）
+├── layout/                       # 🏗️ 全局布局组件
+├── lib/                          # 📚 工具库（核心业务逻辑）
+├── styles/                       # 🎨 全局样式
+└── svgs/                         # 🖼️ SVG 图标文件
+```
 
- ![](https://www.yysuni.com/blogs/readme/011679cd9bf73602.png)
+---
 
-这里可以看到有很多 `Card` 文件，需要改那个首页 Card 内容就可以点入那个具体文件修改。
+## 四、src/app/ — 页面路由详解
 
-比如中间的内容，为 `HiCard`，点击 `hi-card.tsx` 文件，即可更改其内容。
+Next.js 使用文件系统路由——`src/app` 下的每个文件夹对应一个 URL 路径。
 
-![](https://www.yysuni.com/blogs/readme/20b0791d012163ee.png)
+### `src/app/layout.tsx` — 🌐 全局布局（最外层框架）
 
-## 9. 互助群
+所有页面的"外壳"，定义了：
+- HTML 文档结构（`<html>`、`<body>`）
+- 网站的标题和描述（SEO 元数据）
+- 全局 CSS 变量（主题颜色）
+- 自定义鼠标光标
+- 检测用户是否使用 Windows 系统
 
-对于完全不是**程序员**的用户，确实会对于更新代码后，如何同步，如何**合并代码**手足无措。我创建了一个 **QQ群**（加群会简单点），或者 vx 群还是 tg 群会好一点可以 issue 里面说下就行。
+### `src/app/(home)/` — 🏠 首页
 
-QQ 群：[https://qm.qq.com/q/spdpenr4k2](https://qm.qq.com/q/spdpenr4k2)
-> 不好意思，之前的那个qq群ID（1021438316），不知道为啥搜不到😂
+文件夹名带括号 `(home)` 表示它不影响 URL——首页的 URL 就是 `/`。
 
-微信群：刚建好了一个微信群，没有 qq 的可以用这个微信群
-![](https://www.yysuni.com/blogs/readme/343f2c62035b8e23.webp)
+| 文件 | 作用 |
+|------|------|
+| `page.tsx` | 首页主文件，组合所有卡片组件 |
+| `hi-card.tsx` | 欢迎卡片（显示你的个人介绍） |
+| `art-card.tsx` | 艺术插图卡片 |
+| `clock-card.tsx` | 时钟卡片 |
+| `calendar-card.tsx` | 日历卡片 |
+| `social-buttons.tsx` | 社交媒体链接按钮（GitHub、掘金等） |
+| `share-card.tsx` | 推荐文章/分享卡片 |
+| `aritcle-card.tsx` | 最新文章列表卡片 |
+| `write-buttons.tsx` | 快捷写作按钮 |
+| `like-position.tsx` | 点赞/位置相关卡片 |
+| `hat-card.tsx` | 帽子装饰卡片 |
+| `beian-card.tsx` | ICP 备案号卡片 |
+| `home-draggable-layer.tsx` | 首页卡片拖拽功能 |
 
-tg 群：1月1号，才创建的 tg 群 https://t.me/public_blog_2025
+**子目录：**
+- `config-dialog/` — 网站配置弹窗（主题色、布局、背景图等设置）
+- `stores/` — 首页状态管理
+  - `config-store.ts` — 全局配置状态（主题色、网站设置等）
+  - `layout-edit-store.ts` — 首页卡片布局编辑状态
+- `services/` — 数据推送服务
+  - `push-site-content.ts` — 将配置修改推送到 GitHub 仓库
 
+### `src/app/blog/` — 📝 博客文章列表页
 
-应该主要是我自己亲自帮助你们遇到问题怎么办。（后续看看有没有好心人）
+URL: `/blog`
 
-希望多多的非程序员加入 blogger 行列，web blog 还是很好玩的，属于自己的 blog 世界。
+| 文件 | 作用 |
+|------|------|
+| `page.tsx` | 文章列表页（支持按日/周/月/年/分类 查看） |
+| `types.ts` | 文章数据类型定义 |
+| `components/category-modal.tsx` | 分类管理弹窗 |
+| `services/save-blog-edits.ts` | 保存文章编辑（推送到 GitHub） |
+| `services/batch-delete-blogs.ts` | 批量删除文章 |
 
-游戏资产不一定属于你的，你只有**使用权**，但这个 blog **网站、内容、仓库一定是属于你的**
+### `src/app/blog/[id]/` — 📖 单篇文章详情页
 
-#### 特殊的导航 Card
+URL: `/blog/文章id`
 
-因为这个 Card 是全局都在的，所以放在了 `src/components` 目录
+| 文件 | 作用 |
+|------|------|
+| `page.tsx` | 文章详情页（渲染 Markdown 内容） |
 
-![](https://www.yysuni.com/blogs/readme/9780c38f886322fd.png)
+`[id]` 是 Next.js 的动态路由——方括号表示它是路径参数，实际 URL 中会被替换为具体的文章 ID。
 
-## Star History
+### `src/app/write/` — ✍️ 文章写作/编辑页
 
-<a href="https://www.star-history.com/#YYsuni/2025-blog-public&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=YYsuni/2025-blog-public&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=YYsuni/2025-blog-public&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=YYsuni/2025-blog-public&type=date&legend=top-left" />
- </picture>
-</a>
+URL: `/write`
+
+| 文件 | 作用 |
+|------|------|
+| `page.tsx` | 写作页主体 |
+| `components/editor.tsx` | Markdown 编辑器 |
+| `components/preview.tsx` | 文章预览组件 |
+| `components/sidebar.tsx` | 右侧边栏（元信息设置） |
+| `components/actions.tsx` | 操作按钮（发布、保存等） |
+| `components/sections/` | 分区组件（封面、图片、元信息） |
+| `hooks/` | 自定义 Hook（加载文章、发布、写作数据） |
+| `services/` | 推送/删除文章到 GitHub |
+| `stores/` | 编辑器状态管理 |
+
+### `src/app/write/[slug]/` — ✍️ 编辑已有文章
+
+URL: `/write/文章id`
+
+当你点击某篇文章的"编辑"时，会跳转到这个页面，自动加载已有文章内容。
+
+### `src/app/projects/` — 🚀 我的项目页
+
+URL: `/projects`
+
+展示你的个人项目列表。支持编辑、添加、删除项目。
+
+### `src/app/about/` — ℹ️ 关于网站页
+
+URL: `/about`
+
+网站介绍页面。
+
+### `src/app/share/` — 🔗 推荐分享页
+
+URL: `/share`
+
+推荐的资源/工具/网站分享列表。
+
+### `src/app/bloggers/` — 👥 优秀博客页
+
+URL: `/bloggers`
+
+展示其他优秀博主的链接和头像。
+
+### `src/app/pictures/` — 🖼️ 照片墙页
+
+URL: `/pictures`
+
+展示照片集合，支持随机布局。
+
+### `src/app/snippets/` — 📋 代码片段页
+
+URL: `/snippets`
+
+收集的代码片段。
+
+### `src/app/music/` — 🎵 音乐页
+
+URL: `/music`
+
+音乐播放相关，`list.ts` 存储音乐列表。
+
+### `src/app/clock/` — 🕐 时钟页
+
+URL: `/clock`
+
+独立的全屏时钟页面。
+
+### `src/app/live2d/` — 🎭 Live2D 页
+
+URL: `/live2d`
+
+Live2D 动画角色展示页面。
+
+### `src/app/image-toolbox/` — 🔧 图片工具箱
+
+URL: `/image-toolbox`
+
+图片处理工具页面。
+
+### `src/app/svgs/` — 🎨 SVG 展示页
+
+URL: `/svgs`
+
+展示项目中的所有 SVG 图标。
+
+### `src/app/rss.xml/` — 📡 RSS 订阅源
+
+URL: `/rss.xml`
+
+自动生成 RSS 订阅源（XML 格式），方便别人通过 RSS 阅读器订阅你的博客。
+
+### `src/app/sitemap.ts` — 🗺️ 站点地图
+
+自动生成 `sitemap.xml`，帮助搜索引擎（Google、百度）收录你的博客页面。
+
+---
+
+## 五、src/components/ — 全局通用组件
+
+这些组件在多个页面中复用。
+
+| 文件 | 作用 |
+|------|------|
+| `card.tsx` | 通用卡片容器（统一的圆角、阴影、背景样式） |
+| `nav-card.tsx` | ⭐ 全局导航栏（首页显示完整导航，其他页显示图标导航） |
+| `blog-preview.tsx` | 博客文章预览渲染组件 |
+| `blog-sidebar.tsx` | 博客页面侧边栏 |
+| `blog-toc.tsx` | 文章目录（Table of Contents） |
+| `code-block.tsx` | 代码块组件（支持语法高亮、复制） |
+| `color-picker.tsx` | 颜色选择器 |
+| `dialog-modal.tsx` | 通用弹窗/对话框 |
+| `markdown-image.tsx` | Markdown 图片渲染组件 |
+| `music-card.tsx` | 音乐播放卡片 |
+| `scroll-top-button.tsx` | 回到顶部按钮 |
+| `like-button.tsx` | 点赞按钮 |
+| `star-rating.tsx` | 星级评分组件 |
+| `select.tsx` | 下拉选择器 |
+| `wip.tsx` | "施工中"占位组件（Work In Progress） |
+| `liquid-grass/` | "液态草地"动画特效组件 |
+
+---
+
+## 六、src/layout/ — 全局布局组件
+
+| 文件 | 作用 |
+|------|------|
+| `index.tsx` | ⭐ 全局布局主文件（组装背景、导航、弹窗、音乐播放器） |
+| `header.tsx` | 页头（目前为空，保留给未来使用） |
+| `footer.tsx` | 页脚（目前为空，保留给未来使用） |
+| `head.tsx` | HTML `<head>` 标签内容 |
+| `backgrounds/blurred-bubbles.tsx` | 模糊气泡动态背景 |
+| `backgrounds/snowfall.tsx` | 雪花飘落特效（圣诞节模式） |
+| `backgrounds/utils.ts` | 背景工具函数 |
+
+---
+
+## 七、src/lib/ — 核心工具库
+
+这是项目的"大脑"，包含所有核心业务逻辑。
+
+| 文件 | 作用 |
+|------|------|
+| `github-client.ts` | ⭐⭐ **最核心的文件**。封装了所有 GitHub API 调用——获取令牌、读写文件、创建提交、批量操作 |
+| `auth.ts` | ⭐ 认证管理。缓存和管理 GitHub 访问令牌（Token），自动处理 JWT 签发和令牌刷新 |
+| `aes256-util.ts` | AES-256-GCM 加密解密。用于保护存储在浏览器中的 GitHub 私钥 |
+| `blog-index.ts` | 博客索引管理。读取/更新/删除 `public/blogs/index.json` 中的文章索引 |
+| `markdown-renderer.ts` | ⭐ Markdown 渲染引擎。将 Markdown 文本转换为 HTML，支持代码高亮（Shiki）、数学公式（KaTeX）、目录生成 |
+| `file-utils.ts` | 文件处理工具（读取文件、Base64 转换、SHA-256 哈希） |
+| `utils.ts` | 通用工具函数（如 `cn()` 合并 CSS 类名） |
+| `color.ts` | 颜色处理工具（生成随机颜色、颜色转换） |
+| `load-blog.ts` | 加载单篇博客文章详情 |
+| `log.ts` | 日志工具 |
+
+---
+
+## 八、src/hooks/ — 自定义 Hook
+
+| 文件 | 作用 |
+|------|------|
+| `use-auth.ts` | ⭐ 认证状态管理（Zustand store）。管理是否已认证、私钥状态 |
+| `use-blog-index.ts` | ⭐ 博客索引数据获取（使用 SWR 从 `/blogs/index.json` 加载文章列表） |
+| `use-categories.ts` | 博客分类数据获取 |
+| `use-read-articles.ts` | 已读文章记录（存在 localStorage） |
+| `use-center.ts` | 计算页面中心坐标（用于定位元素） |
+| `use-size.ts` | 响应式屏幕尺寸检测（判断手机/桌面） |
+| `use-markdown-render.tsx` | Markdown 渲染 Hook |
+
+---
+
+## 九、src/config/ — 配置文件
+
+| 文件 | 作用 |
+|------|------|
+| `site-content.json` | ⭐ 网站全局配置——标题、描述、主题颜色、背景图、社交链接、备案号等 |
+| `card-styles.json` | 首页卡片样式配置——各卡片位置、大小、是否显示 |
+| `card-styles-default.json` | 卡片样式的默认值备份 |
+
+---
+
+## 十、src/styles/ — 样式文件
+
+| 文件 | 作用 |
+|------|------|
+| `globals.css` | 全局 CSS（Tailwind 指令 + 自定义全局样式） |
+| `theme.css` | 主题相关的 CSS 变量定义 |
+| `article.css` | 文章内容页面的专属样式（排版、字体等） |
+
+---
+
+## 十一、工作原理解析
+
+### 这个博客是怎么运作的？
+
+1. **没有后端服务器**——所有数据都存在 GitHub 仓库里。
+2. **GitHub 就是数据库**——文章内容、图片、配置全部以文件形式存储在仓库中。
+3. **通过 GitHub App 认证**——用户在网页上导入 `.pem` 私钥文件，前端用这个私钥签发 JWT，然后调用 GitHub API 来读写仓库文件。
+4. **在线编辑 = 提交代码到 GitHub**——当你通过网页修改文章时，实际是调用 GitHub API 新建了一个 commit。
+
+### 部署流程
+
+```
+你的电脑                          GitHub 仓库                   Cloudflare/Vercel
+   |                                |                              |
+   |-- git push 代码 --------------->|                              |
+   |                                |-- 触发自动部署 -------------->|
+   |                                |                              |-- 构建网站
+   |                                |                              |-- 上线 🎉
+```
+
+### 编辑文章流程
+
+```
+网页上的编辑器
+   |
+   |-- 你编辑 Markdown 内容
+   |-- 点击"保存"
+   |-- 前端用你的私钥认证
+   |-- 调用 GitHub API，把内容写入仓库文件
+   |-- GitHub 触发自动部署
+   |-- 等待几分钟，刷新就看到新内容 ✅
+```
+
+---
+
+## 十二、给新手的自定义指南
+
+### 你要改的东西在哪？
+
+| 想改什么 | 去哪里改 |
+|----------|----------|
+| 网站标题、用户名 | `src/config/site-content.json` |
+| 主题颜色 | `src/config/site-content.json` 的 `theme`部分 或 首页配置弹窗 |
+| 头像 | 替换 `public/images/avatar.png` |
+| 浏览器标签页图标 | 替换 `public/favicon.png` |
+| 首页欢迎文字 | `src/app/(home)/hi-card.tsx` |
+| 社交链接 | `src/config/site-content.json` 的 `socialButtons` 部分 或 首页配置弹窗 |
+| 导航栏菜单项 | `src/components/nav-card.tsx` 的 `list` 数组 |
+| 项目列表 | `src/app/projects/list.json` |
+| 备案号 | `src/config/site-content.json` 的 `beian` 部分 |
+| 首页卡片显隐/位置 | `src/config/card-styles.json` |
+| ICP 备案号 | `src/config/site-content.json` 的 `beian` 部分 |
+| 全局 CSS 样式 | `src/styles/globals.css` |
+| 文章排版样式 | `src/styles/article.css` |
+| GitHub 仓库配置 | `src/consts.ts`（OWNER、REPO、APP_ID 等） |
+
+### 重要提醒
+
+- **密钥安全**：`.pem` 私钥文件不要上传到公开仓库，否则任何人都能操作你的仓库。
+- **部署延迟**：通过网页编辑后，需要等待 GitHub 自动部署完成（通常 1-2 分钟），刷新才能看到更新。
+- **图片建议**：上传图片前先压缩，宽度不超过 1200px。
+- **首页布局**：按 `Ctrl+L`（Mac 按 `Cmd+L`）可以打开配置弹窗。
+
+---
+
+> 这份文档是 2026-08-02 基于项目当前代码结构整理的。项目如有更新，以实际代码为准。
